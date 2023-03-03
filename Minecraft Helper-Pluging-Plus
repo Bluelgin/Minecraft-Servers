@@ -1,0 +1,152 @@
+- 按照玩家完成的成就来跟踪他们的进度，并将进度保存到某个文件中。
+- 可以根据特定的成就向玩家发送奖励。
+- 显示玩家成就列表及其进度。
+- 添加新的成就，以便使游戏更加有趣。
+- 实现一些有趣的成就，激励玩家更好地体验游戏。
+
+下面是一个示例代码，您可以将其添加到以上代码中：
+
+```java
+public class JinitaimeiPlugin extends JavaPlugin {
+private boolean enabled;
+private Map<UUID, PlayerProgress> playerProgressMap;
+
+@Override
+public void onEnable() {
+// 插件启动时的逻辑
+enabled = true;
+playerProgressMap = new HashMap<>();
+loadPlayerProgress();
+getLogger().info("Jinitaimei Plugin has been enabled!");
+}
+
+@Override
+public void onDisable() {
+// 插件关闭时的逻辑
+enabled = false;
+savePlayerProgress();
+getLogger().info("Jinitaimei Plugin has been disabled!");
+}
+
+@Override
+public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+// 处理命令
+if (cmd.getName().equalsIgnoreCase("jinitaimei")) {
+if (args.length > 0) {
+// 重载插件
+if (args[0].equalsIgnoreCase("reload")) {
+if (!sender.hasPermission("jinitaimei.reload")) {
+sender.sendMessage(ChatColor.RED + "你没有重载插件的权限!");
+return true;
+}
+reloadConfig();
+loadPlayerProgress();
+sender.sendMessage(ChatColor.GREEN + "Jinitaimei Plugin已重新加载!");
+return true;
+}
+}
+// 开启/关闭插件
+if (sender instanceof Player) {
+Player player = (Player) sender;
+if (!player.hasPermission("jinitaimei.toggle")) {
+player.sendMessage(ChatColor.RED + "你没有启动/关闭插件的权限!");
+return true;
+}
+// 切换启用状态
+enabled = !enabled;
+player.sendMessage(enabled ? ChatColor.GREEN + "Jinitaimei Plugin已启用!" : ChatColor.RED + "Jinitaimei Plugin已关闭!");
+return true;
+}
+sender.sendMessage(ChatColor.RED + "这个命令只能由玩家运行!");
+return true;
+} else if (cmd.getName().equalsIgnoreCase("achievements")) {
+if (sender instanceof Player) {
+Player player = (Player) sender;
+if (!player.hasPermission("jinitaimei.view")) {
+player.sendMessage(ChatColor.RED + "你没有查看成就进度的权限!");
+return true;
+}
+// 显示玩家成就列表及其进度
+PlayerProgress progress = playerProgressMap.get(player.getUniqueId());
+if (progress != null) {
+player.sendMessage(ChatColor.BLUE + "你的成就进度：");
+for (Achievement achievement : Achievement.values()) {
+player.sendMessage(achievement.getDisplayText(progress.getProgress(achievement)));
+}
+}
+return true;
+}
+sender.sendMessage(ChatColor.RED + "这个命令只能由玩家运行!");
+return true;
+}
+return false;
+}
+
+// 玩家进入游戏时触发
+@Override
+public void onPlayerJoin(PlayerJoinEvent event) {
+if (enabled) {
+// 逐步完成游戏成就
+Player player = event.getPlayer();
+if (!playerProgressMap.containsKey(player.getUniqueId())) {
+playerProgressMap.put(player.getUniqueId(), new PlayerProgress());
+}
+PlayerProgress progress = playerProgressMap.get(player.getUniqueId());
+progress.setProgress(Achievement.JOIN_GAME, 1);
+// 具体的逻辑请根据您的需求修改
+player.sendMessage(ChatColor.GOLD + "欢迎来到 Minecraft 服务器!");
+player.sendMessage(ChatColor.GOLD + "你已经加入游戏 " + progress.getProgress(Achievement.JOIN_GAME) + " 次了！");
+if (progress.isAchieved(Achievement.JOIN_GAME)) {
+giveAchievementReward(player, Achievement.JOIN_GAME);
+}
+}
+}
+
+// 实现给予玩家奖励的逻辑，比如增加金钱
+private void giveAchievementReward(Player player, Achievement achievement) {
+// 实现给予玩家特定成就奖励的逻辑，比如增加金钱
+}
+
+// 加载玩家成就进度
+private void loadPlayerProgress() {
+playerProgressMap.clear();
+File file = new File(getDataFolder(), "progress.yml");
+if (!file.exists()) {
+return;
+}
+try (FileReader reader = new FileReader(file)) {
+Gson gson = new Gson();
+Type type = new TypeToken<Map<UUID, PlayerProgress>>(){}.getType();
+playerProgressMap = gson.fromJson(reader, type);
+} catch (IOException e) {
+getLogger().warning("无法从文件中读取玩家进度: " + e.getMessage());
+}
+}
+
+// 保存玩家成就进度
+private void savePlayerProgress() {
+File file = new File(getDataFolder(), "progress.yml");
+try {
+if (!file.exists()) {
+file.createNewFile();
+}
+Gson gson = new GsonBuilder().setPrettyPrinting().create();
+try (Writer writer = new FileWriter(file)) {
+gson.toJson(playerProgressMap, writer);
+}
+} catch (IOException e) {
+getLogger().warning("无法保存玩家进度至文件: " + e.getMessage());
+}
+}
+}
+```
+
+此插件中，我们添加了以下新功能：
+
+- PlayerProgress类：用于存储每个玩家的成就进度。
+- onPlayerJoin()方法中，我们使用PlayerProgress类来跟踪每个玩家的成就进度，并向玩家发送欢迎消息，告诉他们他们已经加入游戏多少次。
+- giveAchievementReward()方法：用来给玩家发放奖励，该方法可以根据具体的需求进行定制。
+- /achievements命令：用来显示每个玩家的成就列表及其进度。
+- 加载和保存玩家成就进度：将PlayerProgress对象保存到文件中，并在插件启动和关闭时加载和保存这些数据。
+
+这还是一个非常基础的插件，您可以随意添加功能，以及修改成就的逻辑，并将其进行适当的封装和优化。
