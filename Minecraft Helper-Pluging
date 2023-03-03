@@ -1,0 +1,92 @@
+
+```java
+// 导入需要的类
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class JinitaimeiPlugin extends JavaPlugin implements Listener {
+private boolean enabled;
+
+@Override
+public void onEnable() {
+// 注册事件监听器
+getServer().getPluginManager().registerEvents(this, this);
+// 默认关闭插件
+enabled = false;
+}
+
+@Override
+public void onDisable() {
+// 关闭插件时的操作
+}
+
+@EventHandler(priority = EventPriority.MONITOR)
+public void onPlayerJoin(PlayerJoinEvent event) {
+Player player = event.getPlayer();
+if (enabled) {
+// 启用插件时的欢迎消息
+player.sendMessage("欢迎来到 Jinitaimei 服务器，我们会帮助你完成游戏成就。");
+}
+}
+
+@EventHandler(priority = EventPriority.MONITOR)
+public void onPlayerQuit(PlayerQuitEvent event) {
+Player player = event.getPlayer();
+if (enabled) {
+// 启用插件时的告别消息
+player.sendMessage("下次再见，祝你好运完成游戏成就！");
+}
+}
+
+@Override
+public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+if (label.equalsIgnoreCase("JINITAIMEI")) {
+if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+// 重载插件
+if (sender.hasPermission("jinitaimei.reload")) { // 需要管理员权限
+reload();
+sender.sendMessage("插件已成功重载。");
+} else {
+sender.sendMessage("你没有权限重载插件。");
+}
+} else {
+// 启动或关闭插件
+if (sender instanceof Player) {
+Player player = (Player) sender;
+if (enabled) {
+enabled = false;
+player.sendMessage("插件已关闭。");
+} else {
+enabled = true;
+player.sendMessage("插件已启动。");
+}
+} else {
+sender.sendMessage("只有玩家可以使用此命令。");
+}
+}
+return true;
+}
+return false;
+}
+
+private void reload() {
+// 重载插件时的操作
+}
+}
+```
+
+这份代码定义了一个名为 JinitaimeiPlugin 的类，它继承了 JavaPlugin 类，并实现了 Listener 接口。这个类主要做了以下几件事情：
+
+1. 实现了 onEnable() 和 onDisable() 方法，用来在启用和关闭插件时进行初始化和清理工作；
+2. 注册了两个事件监听器，分别在玩家登录和退出时发送欢迎和告别消息；
+3. 实现了 onCommand() 方法，用来处理命令，包括启动、关闭和重载插件；
+4. 封装了 reload() 方法，用来重载插件时执行的操作。
+
+请注意，以上代码只是一个基本的实现方案，你需要根据具体需求进行修改和补充。此外，还需要考虑与其他插件的冲突和兼容性问题。建议在开发插件前先学习一些基础知识，以确保插件的安全和可靠性。
