@@ -1,0 +1,88 @@
+```java
+package com.example.wikiplugin;
+
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jsoup.HttpStatusException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import java.net.URLEncoder;
+
+public class WikiPlugin extends JavaPlugin implements CommandExecutor {
+
+@Override
+public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+if(label.equalsIgnoreCase("wiki")) {
+if(args.length == 0) {
+sender.sendMessage(ChatColor.RED + "Please specify what you want to search for.");
+return true;
+}
+
+if(args[0].equalsIgnoreCase("reload")) {
+if(sender.hasPermission("wikiplugin.reload")) {
+this.reloadConfig();
+sender.sendMessage(ChatColor.GREEN + "Wiki plugin reloaded successfully.");
+} else {
+sender.sendMessage(ChatColor.RED + "You don't have permission to reload this plugin.");
+}
+
+return true;
+}
+
+Player player = (Player) sender;
+
+try {
+String searchQuery = String.join(" ", args);
+String searchUrl = "https://minecraft.fandom.com/wiki/" + URLEncoder.encode(searchQuery);
+
+Document doc = Jsoup.connect(searchUrl).get();
+Elements elements = doc.select(".mw-parser-output p");
+
+String result = null;
+
+for(Element element : elements) {
+if (!element.text().contains("Disambiguation")) {
+result = element.text();
+break;
+}
+}
+
+if(result == null) {
+player.sendMessage(ChatColor.RED + "The content you searched for does not exist.");
+} else {
+player.sendMessage(ChatColor.YELLOW + "Search result for \"" + searchQuery + "\":");
+player.sendMessage(result);
+}
+} catch (HttpStatusException ex) {
+if (ex.getStatusCode() == 404) {
+player.sendMessage(ChatColor.RED + "The content you searched for does not exist.");
+} else {
+player.sendMessage(ChatColor.RED + "Error: " + ex.getMessage());
+}
+} catch (Exception ex) {
+player.sendMessage(ChatColor.RED + "Error: " + ex.getMessage());
+}
+
+return true;
+}
+
+return false;
+}
+}
+```
+
+本插件现在还支持重载指令。如果管理员在聊天窗口中输入“/wiki reload”，则插件将重新加载并发送一个消息通知管理员插件已重新加载。请注意，只有拥有“wikiplugin.reload”权限的玩家才能重载插件。
+
+我们还展示插件的搜索结果。如果玩家搜索的内容无效，则插件将返回新的“你所搜索的内容是不存在的”消息，让玩家了解他们输入的搜索查询无效。
+
+为了实现这些新功能，我们引入了一个新的条件，以检查玩家是否正在尝试重载插件。如果是，则判断发送者是否具有适当的权限，然后在成功调用reloadConfig()方法后立即返回。
+
+最后，我们展示异常消息，让玩家了解如果发生错误，插件将返回什么样的消息。
+
+如前所述，您需要将此代码复制到您的Java文件中，并使用您选择的编译器将其编译为.jar文件。保存.jar文件后，将其复制到您的Minecraft服务器的“plugins”目录中。最后，重新启动服务器并开始使用新的Wiki插件。
